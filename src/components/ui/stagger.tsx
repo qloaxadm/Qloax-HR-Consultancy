@@ -34,17 +34,17 @@ export function StaggerGroup({
 export function StaggerItem({
   children,
   className,
-  y = 16,
+  y = 20,
   as = "div",
 }: {
   children: ReactNode;
   className?: string;
   y?: number;
-  as?: "div" | "li" | "span";
+  as?: "div" | "li";
 }) {
   const MotionTag = motion[as];
   return (
-    <MotionTag className={className} variants={staggerItem(y)}>
+    <MotionTag data-reveal className={className} variants={staggerItem(y)}>
       {children}
     </MotionTag>
   );

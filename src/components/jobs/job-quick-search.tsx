@@ -1,40 +1,46 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { JOB_LOCATIONS } from "@/content/jobs";
 
+/** A plain GET form: works without JavaScript and lands on a shareable /careers URL. */
 export function JobQuickSearch() {
-  const router = useRouter();
-  const [value, setValue] = useState("");
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const params = new URLSearchParams();
-    if (value.trim()) params.set("q", value.trim());
-    router.push(`/careers${params.toString() ? `?${params.toString()}` : ""}`);
-  }
-
   return (
     <form
-      onSubmit={handleSubmit}
+      action="/careers"
+      method="get"
       role="search"
       aria-label="Search roles"
-      className="flex w-full items-center gap-3 border-b border-line pb-2 sm:w-auto"
+      className="grid gap-px overflow-hidden rounded-[2px] border border-line bg-line md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]"
     >
-      <Search className="size-4 shrink-0 text-muted" aria-hidden />
-      <input
-        type="text"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder="Search by keyword or location"
-        className="w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none sm:w-56"
-      />
+      <label className="flex items-center gap-3 bg-bg px-5">
+        <Search aria-hidden className="size-4 shrink-0 text-muted" />
+        <span className="sr-only">Keyword</span>
+        <input
+          type="search"
+          name="q"
+          placeholder="Role, skill, or sector"
+          className="h-14 w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
+        />
+      </label>
+      <label className="flex items-center bg-bg px-5">
+        <span className="sr-only">Location</span>
+        <select
+          name="location"
+          defaultValue=""
+          className="h-14 w-full cursor-pointer appearance-none bg-transparent text-sm text-ink focus:outline-none"
+        >
+          <option value="">Any location</option>
+          {JOB_LOCATIONS.map((location) => (
+            <option key={location} value={location}>
+              {location}
+            </option>
+          ))}
+        </select>
+      </label>
       <button
         type="submit"
-        className="shrink-0 text-xs uppercase tracking-wide text-muted transition-colors hover:text-accent"
+        className="h-14 bg-accent px-7 text-sm font-medium text-accent-ink transition-colors duration-300 hover:bg-accent-hover active:scale-[0.98]"
       >
-        Go
+        Search roles
       </button>
     </form>
   );

@@ -3,10 +3,12 @@ import { ArrowRight } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary";
+type Size = "md" | "sm";
 
 type ButtonProps = {
   variant?: Variant;
+  size?: Size;
   icon?: boolean;
   className?: string;
   children: ReactNode;
@@ -14,29 +16,50 @@ type ButtonProps = {
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children">;
 
 const base =
-  "group inline-flex items-center gap-2.5 whitespace-nowrap rounded-sm px-6 py-3.5 text-sm font-medium tracking-wide transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none";
+  "group relative inline-flex select-none items-center justify-center gap-3 whitespace-nowrap rounded-[2px] font-medium tracking-[-0.005em] transition-[background-color,border-color,color,transform] duration-300 ease-out-expo active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-accent-ink hover:bg-ink",
-  secondary: "border border-line text-ink hover:border-accent hover:text-accent",
-  ghost: "text-ink hover:text-accent px-0",
+  primary: "bg-accent text-accent-ink hover:bg-accent-hover",
+  secondary: "border border-line bg-bg/40 text-ink hover:border-ink/35 hover:bg-surface",
 };
+
+const sizes: Record<Size, string> = {
+  md: "h-12 px-6 text-sm",
+  sm: "h-10 px-4 text-[13px]",
+};
+
+function RollLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="relative block overflow-hidden">
+      <span className="block transition-transform duration-500 ease-out-expo group-hover:-translate-y-full">
+        {children}
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 block translate-y-full transition-transform duration-500 ease-out-expo group-hover:translate-y-0"
+      >
+        {children}
+      </span>
+    </span>
+  );
+}
 
 export function Button({
   variant = "primary",
+  size = "md",
   icon = true,
   className,
   children,
   href,
   ...rest
 }: ButtonProps) {
-  const classes = cn(base, variants[variant], className);
+  const classes = cn(base, variants[variant], sizes[size], className);
   const content = (
     <>
-      <span>{children}</span>
+      <RollLabel>{children}</RollLabel>
       {icon && (
         <ArrowRight
-          className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+          className="size-4 shrink-0 transition-transform duration-500 ease-out-expo group-hover:translate-x-0.5"
           aria-hidden
         />
       )}

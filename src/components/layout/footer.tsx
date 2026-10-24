@@ -1,51 +1,28 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/ui/logo";
 import { Container } from "@/components/ui/container";
-import { Button } from "@/components/ui/button";
 import { FOOTER_NAV, LEGAL_NAV, SITE } from "@/content/site";
+import { FooterWordmark } from "./footer-wordmark";
 
 export function Footer() {
   return (
-    <footer className="border-t border-line bg-bg-secondary">
-      <Container className="py-16 lg:py-20">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_2fr]">
-          <div>
+    <footer className="relative overflow-hidden border-t border-line bg-bg">
+      <Container className="pt-20 md:pt-28">
+        <div className="grid gap-14 lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-4">
             <Wordmark size="lg" />
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted">
-              {SITE.description}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                href="/employers"
-                variant="secondary"
-                icon={false}
-                className="text-xs"
-              >
-                Hire Talent
-              </Button>
-              <Button
-                href="/careers"
-                variant="ghost"
-                icon={false}
-                className="text-xs"
-              >
-                Explore Careers
-              </Button>
-            </div>
+            <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted">{SITE.description}</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:col-span-7 lg:col-start-6">
             {FOOTER_NAV.map((group) => (
               <div key={group.heading}>
-                <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
-                  {group.heading}
-                </p>
-                <ul className="mt-4 space-y-3">
+                <p className="eyebrow">{group.heading}</p>
+                <ul className="mt-5 space-y-3.5">
                   {group.links.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-ink/85 transition-colors duration-200 hover:text-accent"
+                        className="link-underline text-sm text-ink/85 transition-colors duration-300 hover:text-ink"
                       >
                         {link.label}
                       </Link>
@@ -54,24 +31,28 @@ export function Footer() {
                 </ul>
               </div>
             ))}
-          </div>
+          </nav>
         </div>
+      </Container>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-line pt-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+      <Container className="mt-20 md:mt-28">
+        <FooterWordmark name={SITE.name} />
+      </Container>
+
+      <Container>
+        <div className="flex flex-col gap-4 border-t border-line py-7 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {SITE.legalName}. All rights
-            reserved.
+            © {new Date().getFullYear()} {SITE.legalName}. All rights reserved.
           </p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
             {LEGAL_NAV.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="transition-colors duration-200 hover:text-ink"
-              >
+              <Link key={link.href} href={link.href} className="transition-colors duration-300 hover:text-ink">
                 {link.label}
               </Link>
             ))}
+            <a href="#main-content" className="transition-colors duration-300 hover:text-ink">
+              Back to top ↑
+            </a>
           </div>
         </div>
       </Container>

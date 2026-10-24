@@ -1,28 +1,28 @@
-import { Hero } from "@/components/sections/hero";
-import { TrustStrip } from "@/components/sections/trust-strip";
-import { Introduction } from "@/components/sections/introduction";
-import { ServicesOverview } from "@/components/sections/services-overview";
-import { IndustriesOverview } from "@/components/sections/industries-overview";
-import { Methodology } from "@/components/sections/methodology";
-import { FeaturedJobs } from "@/components/sections/featured-jobs";
-import { EmployerCta } from "@/components/sections/employer-cta";
-import { CandidateCta } from "@/components/sections/candidate-cta";
-import { InsightsPreview } from "@/components/sections/insights-preview";
-import { FinalCta } from "@/components/sections/final-cta";
+import { Hero } from "@/components/home/hero";
+import { DisciplinesStrip } from "@/components/home/disciplines-strip";
+import { Consultancy } from "@/components/home/consultancy";
+import { ServicesSection } from "@/components/home/services-section";
+import { IndustriesSection } from "@/components/home/industries-section";
+import { ProcessSection } from "@/components/home/process-section";
+import { OpportunitiesSection } from "@/components/home/opportunities-section";
+import { EmployerCta } from "@/components/home/employer-cta";
+import { CandidateCta } from "@/components/home/candidate-cta";
+import { InsightsSection } from "@/components/home/insights-section";
+import { FinalCta } from "@/components/home/final-cta";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <>
       <Hero />
-      <TrustStrip />
-      <Introduction />
-      <ServicesOverview />
-      <IndustriesOverview />
-      <Methodology />
-      <FeaturedJobs />
+      <DisciplinesStrip />
+      <Consultancy />
+      <ServicesSection />
+      <IndustriesSection />
+      <ProcessSection />
+      <OpportunitiesSection />
       <EmployerCta />
       <CandidateCta />
-      <InsightsPreview />
+      <InsightsSection />
       <FinalCta />
     </>
   );
