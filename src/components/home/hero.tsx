@@ -29,7 +29,7 @@ export function Hero() {
           <span className="line-mask md:inline-block lg:pl-[1.1em]">
             <span style={delayStyle(280)}>{HERO.lines[1]}</span>
           </span>
-          <span className="line-mask pl-[1.3em] md:ml-[0.26em] md:inline-block md:pl-0">
+          <span className="line-mask pl-[1.3em] md:ml-[0.2em] md:inline-block md:pl-0">
             <span style={delayStyle(400)}>
               {HERO.lines[2].replace(/\.$/, "")}
               <span className="text-accent">.</span>
@@ -37,7 +37,7 @@ export function Hero() {
           </span>
         </h1>
 
-        <div className="mt-9 flex flex-col gap-8 md:mt-12 lg:flex-row lg:items-end lg:gap-16 lg:pl-[calc(var(--text-hero)*1.1)]">
+        <div className="mt-9 flex flex-col gap-8 md:mt-12 lg:pl-[calc(var(--text-hero)*1.1)] xl:flex-row xl:items-end xl:gap-16">
           <p className="rise-in max-w-[30rem] text-lead text-muted" style={delayStyle(620)}>
             {HERO.supporting}
           </p>

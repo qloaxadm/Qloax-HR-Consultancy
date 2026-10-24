@@ -163,6 +163,13 @@
   [id] {
     scroll-margin-top: 7rem;
   }
+
+  /* An implicit grid column is sized by min-content, so one unbreakable string (e.g. a truncated
+     file name) can widen a whole mobile layout. Default to a shrinkable column; grid-cols-* utilities
+     live in a later layer and still override this at their breakpoints. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @layer components {
@@ -270,6 +277,69 @@
   .hero-canvas[data-ready="true"] {
     opacity: 1;
     transform: none;
+  }
+
+  .prose-vp {
+    color: var(--color-text-secondary);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+
+  .prose-vp > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose-vp h2 {
+    margin-top: 2.6em;
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .prose-vp h2 + * {
+    margin-top: 0.9em;
+  }
+
+  .prose-vp ul {
+    padding-left: 0;
+  }
+
+  .prose-vp li {
+    position: relative;
+    padding-left: 1.6em;
+  }
+
+  .prose-vp li + li {
+    margin-top: 0.6em;
+  }
+
+  .prose-vp li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 0.8em;
+    height: 1px;
+    background: var(--color-accent);
+  }
+
+  .prose-vp a {
+    color: var(--color-text-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border);
+    text-underline-offset: 4px;
+    transition: text-decoration-color 0.3s;
+  }
+
+  .prose-vp a:hover {
+    text-decoration-color: var(--color-accent);
+  }
+
+  .prose-vp strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
   }
 
   @media (max-width: 1023px) {

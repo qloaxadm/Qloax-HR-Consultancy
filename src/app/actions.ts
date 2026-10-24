@@ -7,125 +7,139 @@ import {
   employerEnquirySchema,
   jobApplicationSchema,
 } from "@/lib/validation";
-import { appendRecord, saveUploadedFile } from "@/lib/storage";
+import { appendRecord, hasResumeSignature, saveUploadedFile } from "@/lib/storage";
+import { resumeProblem } from "@/lib/resume";
+import { getJobBySlug } from "@/content/jobs";
 import type { FormState } from "@/lib/types";
 
-function zodFieldErrors(error: ZodError) {
-  const fieldErrors: Record<string, string[]> = {};
+type Values = Record<string, string>;
+
+function read(formData: FormData, names: string[]): Values {
+  return Object.fromEntries(
+    names.map((name) => {
+      const value = formData.get(name);
+      return [name, typeof value === "string" ? value.slice(0, 5000) : ""];
+    }),
+  );
+}
+
+function issuesToFields(error: ZodError) {
+  const fields: Record<string, string[]> = {};
   for (const issue of error.issues) {
     const key = String(issue.path[0] ?? "form");
-    fieldErrors[key] = [...(fieldErrors[key] ?? []), issue.message];
+    fields[key] = [...(fields[key] ?? []), issue.message];
   }
-  return fieldErrors;
+  return fields;
 }
 
-function normalizeFile(value: FormDataEntryValue | null) {
-  if (value instanceof File && value.size > 0 && value.name) return value;
-  return null;
-}
-
-export async function submitContactForm(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const parsed = contactSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    topic: formData.get("topic"),
-    message: formData.get("message"),
-    consent: formData.get("consent") === "on",
-  });
-
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: zodFieldErrors(parsed.error),
-    };
-  }
-
-  await appendRecord("contact-messages.json", parsed.data);
-
+function invalid(values: Values, fieldErrors: Record<string, string[]>): FormState {
   return {
-    status: "success",
-    message:
-      "Thanks for reaching out — your message has been received. We'll be in touch soon.",
+    status: "error",
+    message: "Please check the highlighted fields.",
+    fieldErrors,
+    values,
   };
 }
 
-export async function submitEmployerEnquiry(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const parsed = employerEnquirySchema.safeParse({
-    companyName: formData.get("companyName"),
-    contactName: formData.get("contactName"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    roleTitle: formData.get("roleTitle"),
-    teamSize: formData.get("teamSize"),
-    timeline: formData.get("timeline"),
-    message: formData.get("message"),
-    consent: formData.get("consent") === "on",
-  });
-
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: zodFieldErrors(parsed.error),
-    };
+async function checkResume(formData: FormData, required: boolean) {
+  const entry = formData.get("resume");
+  const file = entry instanceof File && entry.size > 0 ? entry : null;
+  if (!file) return { file: null, error: required ? "Please attach your resume." : null };
+  const problem = resumeProblem(file);
+  if (problem) return { file: null, error: problem };
+  if (!(await hasResumeSignature(file))) {
+    return { file: null, error: "That file doesn't look like a valid PDF or Word document." };
   }
-
-  await appendRecord("employer-enquiries.json", parsed.data);
-
-  return {
-    status: "success",
-    message:
-      "Thank you — your hiring enquiry has been received. A consultant will follow up shortly.",
-  };
+  return { file, error: null };
 }
 
-export async function submitCandidateRegistration(
-  _prev: FormState,
-  formData: FormData,
+/**
+ * Development persistence only (see src/lib/storage.ts). A failure here is
+ * reported honestly to the user rather than shown as a success.
+ */
+async function persist(
+  collection: string,
+  record: Record<string, unknown>,
+  values: Values,
+  successMessage: string,
 ): Promise<FormState> {
-  const resume = normalizeFile(formData.get("resume"));
-
-  const parsed = candidateRegistrationSchema.safeParse({
-    fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    currentRole: formData.get("currentRole"),
-    industry: formData.get("industry"),
-    experienceLevel: formData.get("experienceLevel"),
-    linkedinUrl: formData.get("linkedinUrl"),
-    message: formData.get("message"),
-    resume,
-    consent: formData.get("consent") === "on",
-  });
-
-  if (!parsed.success) {
+  try {
+    await appendRecord(collection, { ...record, consent: true });
+    return { status: "success", message: successMessage };
+  } catch (error) {
+    console.error(`[forms] Could not store ${collection}`, error);
     return {
       status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: zodFieldErrors(parsed.error),
+      message: "We couldn't send this right now. Please try again in a moment.",
+      values,
     };
   }
+}
 
-  const { resume: resumeFile, ...rest } = parsed.data;
-  const storedResume = resumeFile ? await saveUploadedFile(resumeFile) : null;
+export async function submitContactForm(_prev: FormState, formData: FormData): Promise<FormState> {
+  const values = read(formData, ["name", "email", "topic", "message", "consent"]);
+  const parsed = contactSchema.safeParse(values);
+  if (!parsed.success) return invalid(values, issuesToFields(parsed.error));
+  return persist(
+    "contact-messages.json",
+    parsed.data,
+    values,
+    "Thank you — your message has been received. We'll reply as soon as we can.",
+  );
+}
 
-  await appendRecord("candidate-registrations.json", {
-    ...rest,
-    resume: storedResume,
-  });
+export async function submitEmployerEnquiry(_prev: FormState, formData: FormData): Promise<FormState> {
+  const values = read(formData, [
+    "companyName",
+    "contactName",
+    "email",
+    "phone",
+    "roleTitle",
+    "teamSize",
+    "timeline",
+    "message",
+    "consent",
+  ]);
+  const parsed = employerEnquirySchema.safeParse(values);
+  if (!parsed.success) return invalid(values, issuesToFields(parsed.error));
+  return persist(
+    "employer-enquiries.json",
+    parsed.data,
+    values,
+    "Thank you — your hiring enquiry has been received. A consultant will be in touch to discuss the brief.",
+  );
+}
 
-  return {
-    status: "success",
-    message:
-      "Thanks for registering — we've received your details and will reach out when a relevant role comes up.",
-  };
+export async function submitCandidateRegistration(_prev: FormState, formData: FormData): Promise<FormState> {
+  const values = read(formData, [
+    "fullName",
+    "email",
+    "phone",
+    "currentRole",
+    "industry",
+    "experienceLevel",
+    "linkedinUrl",
+    "message",
+    "consent",
+  ]);
+  const parsed = candidateRegistrationSchema.safeParse(values);
+  const resume = await checkResume(formData, false);
+  const fieldErrors = parsed.success ? {} : issuesToFields(parsed.error);
+  if (resume.error) fieldErrors.resume = [resume.error];
+  if (!parsed.success || resume.error) return invalid(values, fieldErrors);
+
+  try {
+    const stored = resume.file ? await saveUploadedFile(resume.file) : null;
+    return persist(
+      "candidate-registrations.json",
+      { ...parsed.data, resume: stored },
+      values,
+      "Thank you for introducing yourself. We'll be in touch when a relevant opportunity comes up.",
+    );
+  } catch (error) {
+    console.error("[forms] Could not store resume", error);
+    return { status: "error", message: "We couldn't upload your resume right now. Please try again.", values };
+  }
 }
 
 export async function submitJobApplication(
@@ -133,38 +147,26 @@ export async function submitJobApplication(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const resume = normalizeFile(formData.get("resume"));
+  const job = getJobBySlug(jobSlug);
+  if (!job) return { status: "error", message: "This role is no longer available." };
 
-  const parsed = jobApplicationSchema.safeParse({
-    fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    linkedinUrl: formData.get("linkedinUrl"),
-    coverNote: formData.get("coverNote"),
-    resume,
-    consent: formData.get("consent") === "on",
-  });
+  const values = read(formData, ["fullName", "email", "phone", "linkedinUrl", "coverNote", "consent"]);
+  const parsed = jobApplicationSchema.safeParse(values);
+  const resume = await checkResume(formData, true);
+  const fieldErrors = parsed.success ? {} : issuesToFields(parsed.error);
+  if (resume.error) fieldErrors.resume = [resume.error];
+  if (!parsed.success || resume.error || !resume.file) return invalid(values, fieldErrors);
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: zodFieldErrors(parsed.error),
-    };
+  try {
+    const stored = await saveUploadedFile(resume.file);
+    return persist(
+      "job-applications.json",
+      { jobSlug: job.slug, jobTitle: job.title, isSampleRole: job.isSample, ...parsed.data, resume: stored },
+      values,
+      `Thank you — your application for ${job.title} has been received. We'll review it against the brief and follow up if there's a fit.`,
+    );
+  } catch (error) {
+    console.error("[forms] Could not store resume", error);
+    return { status: "error", message: "We couldn't upload your resume right now. Please try again.", values };
   }
-
-  const { resume: resumeFile, ...rest } = parsed.data;
-  const storedResume = resumeFile ? await saveUploadedFile(resumeFile) : null;
-
-  await appendRecord("job-applications.json", {
-    jobSlug,
-    ...rest,
-    resume: storedResume,
-  });
-
-  return {
-    status: "success",
-    message:
-      "Your application has been received. We'll review it against the role and follow up if there's a fit.",
-  };
 }

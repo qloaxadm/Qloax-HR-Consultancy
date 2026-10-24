@@ -18,7 +18,7 @@ export default function HomePage() {
       <Consultancy />
       <ServicesSection />
       <IndustriesSection />
-      <ProcessSection />
+      <ProcessSection index="04" />
       <OpportunitiesSection />
       <EmployerCta />
       <CandidateCta />

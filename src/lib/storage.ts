@@ -50,6 +50,13 @@ export async function appendRecord(
   return entry;
 }
 
+/** Checks the file's leading bytes: PDF (%PDF), DOCX (zip "PK"), or legacy DOC (OLE2). */
+export async function hasResumeSignature(file: File) {
+  const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+  const starts = (...bytes: number[]) => bytes.every((byte, index) => head[index] === byte);
+  return starts(0x25, 0x50, 0x44, 0x46) || starts(0x50, 0x4b, 0x03, 0x04) || starts(0xd0, 0xcf, 0x11, 0xe0);
+}
+
 function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_").slice(-150);
 }

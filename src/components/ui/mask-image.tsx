@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import type { MediaAsset } from "@/lib/types";
 import { EASE_OUT } from "@/lib/motion";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 const HIDDEN = {
@@ -32,11 +33,8 @@ export function MaskImage({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
-  const [amplitude, setAmplitude] = useState(parallax);
-
-  useEffect(() => {
-    if (window.matchMedia("(max-width: 767px)").matches) setAmplitude(parallax / 2);
-  }, [parallax]);
+  const small = useMediaQuery("(max-width: 767px)");
+  const amplitude = small ? parallax / 2 : parallax;
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [`-${amplitude}%`, `${amplitude}%`]);

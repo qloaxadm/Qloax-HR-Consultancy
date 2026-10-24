@@ -1,102 +1,73 @@
 import { z } from "zod";
 
-export const MAX_RESUME_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-export const ACCEPTED_RESUME_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
+const requiredText = (label: string, max = 120) =>
+  z.string().trim().min(1, `${label} is required.`).max(max, `${label} is too long.`);
 
-const consentField = z.literal(true, {
-  message: "Please confirm you agree to our privacy policy.",
-});
+const optionalText = (max = 120) => z.string().trim().max(max, "This is too long.");
 
-const emailField = z.string().trim().min(1, "Email is required.").email("Enter a valid email address.");
-const nameField = (label: string) =>
-  z.string().trim().min(2, `${label} is required.`).max(120);
-const messageField = (label: string, min = 10) =>
-  z.string().trim().min(min, `${label} is required.`).max(4000);
+const email = z
+  .string()
+  .trim()
+  .min(1, "Email is required.")
+  .pipe(z.email("Enter a valid email address."));
 
-function resumeFileSchema({ required }: { required: boolean }) {
-  return z
-    .instanceof(File)
-    .optional()
-    .nullable()
-    .refine(
-      (file) => (required ? !!file && file.size > 0 : true),
-      "Please attach your resume.",
-    )
-    .refine(
-      (file) => !file || file.size === 0 || file.size <= MAX_RESUME_SIZE_BYTES,
-      "Resume must be 5MB or smaller.",
-    )
-    .refine(
-      (file) =>
-        !file || file.size === 0 || ACCEPTED_RESUME_TYPES.includes(file.type),
-      "Resume must be a PDF or Word document.",
-    );
-}
+const message = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .min(10, "Please add a little more detail.")
+    .max(4000, "Please keep this under 4,000 characters.");
+
+const optionalUrl = z.union([
+  z.literal(""),
+  z.url({ protocol: /^https?$/, error: "Enter a full link starting with https://" }),
+]);
+
+const consent = z.literal("on", "Please confirm you agree to the privacy policy.");
+
+export const TEAM_SIZES = ["1-10", "11-50", "51-200", "201-1000", "1000+"] as const;
+export const TIMELINES = ["Immediate", "1-3 months", "Exploring options"] as const;
+export const EXPERIENCE_LEVELS = ["Early career", "Mid-level", "Senior", "Leadership / Executive"] as const;
+export const CONTACT_TOPICS = ["General", "Employers", "Candidates", "Partnerships", "Other"] as const;
 
 export const contactSchema = z.object({
-  name: nameField("Name"),
-  email: emailField,
-  topic: z.enum(["General", "Employers", "Candidates", "Press", "Other"]),
-  message: messageField("Message"),
-  consent: consentField,
+  name: requiredText("Your name"),
+  email,
+  topic: z.enum(CONTACT_TOPICS, "Please choose a topic."),
+  message: message("A message"),
+  consent,
 });
-export type ContactInput = z.infer<typeof contactSchema>;
 
 export const employerEnquirySchema = z.object({
-  companyName: nameField("Company name"),
-  contactName: nameField("Your name"),
-  email: emailField,
-  phone: z.string().trim().max(40).optional().or(z.literal("")),
-  roleTitle: nameField("Role title"),
-  teamSize: z.enum(["1-10", "11-50", "51-200", "201-1000", "1000+"]),
-  timeline: z.enum(["Immediate", "1-3 months", "Exploring options"]),
-  message: messageField("Message"),
-  consent: consentField,
+  companyName: requiredText("Company name"),
+  contactName: requiredText("Your name"),
+  email,
+  phone: optionalText(40),
+  roleTitle: requiredText("Role title"),
+  teamSize: z.enum(TEAM_SIZES, "Please choose a company size."),
+  timeline: z.enum(TIMELINES, "Please choose a timeline."),
+  message: message("A short description of the role"),
+  consent,
 });
-export type EmployerEnquiryInput = z.infer<typeof employerEnquirySchema>;
 
 export const candidateRegistrationSchema = z.object({
-  fullName: nameField("Full name"),
-  email: emailField,
-  phone: z.string().trim().max(40).optional().or(z.literal("")),
-  currentRole: nameField("Current role"),
-  industry: z.string().trim().min(1, "Please select an industry."),
-  experienceLevel: z.enum([
-    "Entry-level",
-    "Mid-level",
-    "Senior",
-    "Leadership / Executive",
-  ]),
-  linkedinUrl: z
-    .string()
-    .trim()
-    .url("Enter a valid URL.")
-    .optional()
-    .or(z.literal("")),
-  message: messageField("A short note on your goals", 10),
-  resume: resumeFileSchema({ required: false }),
-  consent: consentField,
+  fullName: requiredText("Full name"),
+  email,
+  phone: optionalText(40),
+  currentRole: requiredText("Current or most recent role"),
+  industry: requiredText("Industry"),
+  experienceLevel: z.enum(EXPERIENCE_LEVELS, "Please choose your experience level."),
+  linkedinUrl: optionalUrl,
+  message: message("A note on what you're looking for"),
+  consent,
 });
-export type CandidateRegistrationInput = z.infer<
-  typeof candidateRegistrationSchema
->;
 
 export const jobApplicationSchema = z.object({
-  fullName: nameField("Full name"),
-  email: emailField,
-  phone: z.string().trim().max(40).optional().or(z.literal("")),
-  linkedinUrl: z
-    .string()
-    .trim()
-    .url("Enter a valid URL.")
-    .optional()
-    .or(z.literal("")),
-  coverNote: z.string().trim().max(4000).optional().or(z.literal("")),
-  resume: resumeFileSchema({ required: true }),
-  consent: consentField,
+  fullName: requiredText("Full name"),
+  email,
+  phone: optionalText(40),
+  linkedinUrl: optionalUrl,
+  coverNote: optionalText(4000),
+  consent,
 });
-export type JobApplicationInput = z.infer<typeof jobApplicationSchema>;

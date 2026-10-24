@@ -24,7 +24,7 @@ export function CandidateCta() {
           </Reveal>
           <InViewLines
             lines={["Your next opportunity", "should take you", "somewhere meaningful."]}
-            className="mt-6 text-display font-medium text-ink"
+            className="mt-6 text-[clamp(2.25rem,1.2rem+2.6vw,3.5rem)] font-medium leading-[1.02] tracking-[-0.035em] text-ink"
           />
           <Reveal delay={0.2}>
             <p className="mt-8 max-w-md text-lead text-muted">

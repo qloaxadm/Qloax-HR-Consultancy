@@ -30,12 +30,16 @@ function ActiveDot() {
 
 function ServicesMenu({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
+  const [lastPath, setLastPath] = useState(pathname);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const timer = useRef<number | undefined>(undefined);
   const active = isActivePath(pathname, "/services");
 
-  useEffect(() => setOpen(false), [pathname]);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -142,9 +146,15 @@ export function Navigation() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [lastPath, setLastPath] = useState(pathname);
   const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -152,8 +162,6 @@ export function Navigation() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     if (open) {
@@ -206,7 +214,7 @@ export function Navigation() {
         open
           ? "border-transparent bg-bg"
           : scrolled
-            ? "border-line/80 bg-bg/80 backdrop-blur-md"
+            ? "border-line/80 bg-bg/90 backdrop-blur-md"
             : "border-transparent bg-transparent",
       )}
     >

@@ -11,6 +11,7 @@ type Point = {
   phase: number;
   size: number;
   accent: boolean;
+  weight: number;
 };
 
 type Pulse = { from: number; to: number; prev: number; t: number; speed: number };
@@ -103,8 +104,8 @@ export function HeroField({ className }: { className?: string }) {
       const rand = seeded(20261024);
       points = [];
       for (let i = 0; i < config.count; i++) {
-        const core = i < config.count * 0.34;
-        const r = core ? 0.58 * Math.pow(rand(), 0.75) : 0.74 + rand() * 0.26;
+        const core = i < config.count * 0.46;
+        const r = core ? 0.5 * Math.pow(rand(), 0.6) : 0.78 + rand() * 0.22;
         const theta = rand() * Math.PI * 2;
         const phi = Math.acos(2 * rand() - 1);
         points.push({
@@ -113,7 +114,8 @@ export function HeroField({ className }: { className?: string }) {
           bz: r * Math.sin(phi) * Math.sin(theta),
           phase: rand() * Math.PI * 2,
           size: 0.7 + rand() * 1.1,
-          accent: core ? rand() < 0.16 : rand() < 0.025,
+          accent: core && rand() < 0.17,
+          weight: core ? 1 : 0.5,
         });
       }
 
@@ -176,7 +178,7 @@ export function HeroField({ className }: { className?: string }) {
     }
 
     function layout() {
-      if (tier === "large") return { cx: width * 0.7, cy: height * 0.47, radius: Math.min(width * 0.33, height * 0.6) };
+      if (tier === "large") return { cx: width * 0.7, cy: height * 0.45, radius: Math.min(width * 0.3, height * 0.56) };
       if (tier === "medium") return { cx: width * 0.66, cy: height * 0.36, radius: Math.min(width * 0.44, height * 0.36) };
       return { cx: width * 0.6, cy: height * 0.27, radius: width * 0.56 };
     }
@@ -236,7 +238,8 @@ export function HeroField({ className }: { className?: string }) {
         const depth = (pd[a] + pd[b]) / 2;
         const length = Math.hypot(px[a] - px[b], py[a] - py[b]);
         const fade = clamp01(1 - length / (radius * 0.85));
-        const alpha = (0.035 + depth * 0.3) * fade * intro;
+        const weight = (points[a].weight + points[b].weight) / 2;
+        const alpha = (0.035 + depth * 0.3) * fade * weight * intro;
         if (alpha < 0.012) continue;
         if (points[a].accent && points[b].accent) {
           accentPath.moveTo(px[a], py[a]);
@@ -260,7 +263,7 @@ export function HeroField({ className }: { className?: string }) {
         const p = points[i];
         const depth = pd[i];
         const size = p.size * (0.4 + depth * 1.35);
-        const alpha = (0.16 + depth * 0.78) * intro;
+        const alpha = (0.16 + depth * 0.78) * p.weight * intro;
         if (p.accent) {
           ctx.globalCompositeOperation = "lighter";
           const glow = size * 7;

@@ -1,160 +1,66 @@
 "use client";
 
-import { useActionState } from "react";
 import Link from "next/link";
+import { useActionState } from "react";
 import { submitEmployerEnquiry } from "@/app/actions";
-import {
-  ConsentCheckbox,
-  FieldError,
-  FieldLabel,
-  Select,
-  TextInput,
-  Textarea,
-} from "./fields";
-import { FormStatusBanner } from "./form-status-banner";
-import { SubmitButton } from "./submit-button";
+import { TEAM_SIZES, TIMELINES } from "@/lib/validation";
 import type { FormState } from "@/lib/types";
+import { FormShell } from "./form-shell";
+import { ConsentField, SelectField, TextAreaField, TextField } from "./fields";
+import { SubmitButton } from "./submit-button";
 
 const initialState: FormState = { status: "idle" };
 
+const TEAM_SIZE_LABELS: Record<(typeof TEAM_SIZES)[number], string> = {
+  "1-10": "1–10 employees",
+  "11-50": "11–50 employees",
+  "51-200": "51–200 employees",
+  "201-1000": "201–1,000 employees",
+  "1000+": "1,000+ employees",
+};
+
 export function EmployerEnquiryForm() {
-  const [state, formAction] = useActionState(
-    submitEmployerEnquiry,
-    initialState,
-  );
+  const [state, formAction] = useActionState(submitEmployerEnquiry, initialState);
 
   return (
-    <form action={formAction} className="space-y-6">
-      <FormStatusBanner state={state} />
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <FieldLabel htmlFor="companyName" required>
-            Company Name
-          </FieldLabel>
-          <TextInput
-            id="companyName"
-            name="companyName"
-            required
-            invalid={!!state.fieldErrors?.companyName}
-            aria-describedby="companyName-error"
-          />
-          <FieldError
-            id="companyName-error"
-            messages={state.fieldErrors?.companyName}
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="contactName" required>
-            Your Name
-          </FieldLabel>
-          <TextInput
-            id="contactName"
-            name="contactName"
-            required
-            invalid={!!state.fieldErrors?.contactName}
-            aria-describedby="contactName-error"
-          />
-          <FieldError
-            id="contactName-error"
-            messages={state.fieldErrors?.contactName}
-          />
-        </div>
+    <FormShell
+      action={formAction}
+      state={state}
+      label="Hiring enquiry"
+      success={
+        <>
+          <p>We&apos;ll review the details and get in touch to talk through the role, timeline, and next steps.</p>
+          <Link href="/services" className="mt-5 inline-block text-ink underline decoration-line underline-offset-4 hover:decoration-accent">
+            Explore our services while you wait
+          </Link>
+        </>
+      }
+    >
+      <div className="grid gap-7 sm:grid-cols-2">
+        <TextField name="companyName" label="Company name" required autoComplete="organization" />
+        <TextField name="contactName" label="Your name" required autoComplete="name" />
+        <TextField name="email" label="Work email" type="email" required autoComplete="email" />
+        <TextField name="phone" label="Phone" type="tel" autoComplete="tel" maxLength={40} />
       </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <FieldLabel htmlFor="email" required>
-            Work Email
-          </FieldLabel>
-          <TextInput
-            id="email"
-            name="email"
-            type="email"
-            required
-            invalid={!!state.fieldErrors?.email}
-            aria-describedby="email-error"
-          />
-          <FieldError id="email-error" messages={state.fieldErrors?.email} />
-        </div>
-        <div>
-          <FieldLabel htmlFor="phone">Phone</FieldLabel>
-          <TextInput id="phone" name="phone" type="tel" />
-        </div>
-      </div>
-
-      <div>
-        <FieldLabel htmlFor="roleTitle" required>
-          Role You&apos;re Hiring For
-        </FieldLabel>
-        <TextInput
-          id="roleTitle"
-          name="roleTitle"
+      <TextField name="roleTitle" label="Role you're hiring for" required placeholder="e.g. Head of Operations" />
+      <div className="grid gap-7 sm:grid-cols-2">
+        <SelectField
+          name="teamSize"
+          label="Company size"
           required
-          invalid={!!state.fieldErrors?.roleTitle}
-          aria-describedby="roleTitle-error"
+          options={TEAM_SIZES.map((value) => ({ value, label: TEAM_SIZE_LABELS[value] }))}
         />
-        <FieldError
-          id="roleTitle-error"
-          messages={state.fieldErrors?.roleTitle}
-        />
+        <SelectField name="timeline" label="Hiring timeline" required options={TIMELINES} />
       </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <FieldLabel htmlFor="teamSize" required>
-            Company Size
-          </FieldLabel>
-          <Select id="teamSize" name="teamSize" defaultValue="1-10">
-            <option value="1-10">1–10 employees</option>
-            <option value="11-50">11–50 employees</option>
-            <option value="51-200">51–200 employees</option>
-            <option value="201-1000">201–1,000 employees</option>
-            <option value="1000+">1,000+ employees</option>
-          </Select>
-        </div>
-        <div>
-          <FieldLabel htmlFor="timeline" required>
-            Hiring Timeline
-          </FieldLabel>
-          <Select id="timeline" name="timeline" defaultValue="1-3 months">
-            <option value="Immediate">Immediate</option>
-            <option value="1-3 months">1–3 months</option>
-            <option value="Exploring options">Exploring options</option>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <FieldLabel htmlFor="message" required>
-          Tell Us About the Role
-        </FieldLabel>
-        <Textarea
-          id="message"
-          name="message"
-          required
-          invalid={!!state.fieldErrors?.message}
-          aria-describedby="message-error"
-          placeholder="What does this person need to achieve in their first year?"
-        />
-        <FieldError id="message-error" messages={state.fieldErrors?.message} />
-      </div>
-
-      <ConsentCheckbox
-        id="employer-consent"
-        error={state.fieldErrors?.consent}
-        label={
-          <>
-            I agree to the{" "}
-            <Link href="/privacy-policy" className="underline hover:text-accent">
-              privacy policy
-            </Link>
-            .
-          </>
-        }
+      <TextAreaField
+        name="message"
+        label="Tell us about the role"
+        required
+        minLength={10}
+        placeholder="What does this person need to achieve in their first year?"
       />
-
-      <SubmitButton>Submit Hiring Enquiry</SubmitButton>
-    </form>
+      <ConsentField />
+      <SubmitButton>Submit hiring enquiry</SubmitButton>
+    </FormShell>
   );
 }
